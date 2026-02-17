@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>uprooted</title>
+    <link rel="stylesheet" href="./src/styles/global.css" />
+    <link rel="stylesheet" href="./src/styles/components.css" />
+  </head>
+  <body>
+    <div id="titlebar">
+      <div id="titlebar-drag" data-tauri-drag-region>
+        <span class="titlebar-title">uprooted</span>
+      </div>
+      <div id="titlebar-controls">
+        <button id="btn-minimize" class="titlebar-btn" aria-label="Minimize">&#x2500;</button>
+        <button id="btn-close" class="titlebar-btn close" aria-label="Close">&#x2715;</button>
+      </div>
+    </div>
+
+    <canvas id="stars"></canvas>
+
+    <div id="app">
+      <nav id="nav">
+        <button class="nav-tab active" data-page="installer">installer</button>
+        <button class="nav-tab" data-page="themes">themes</button>
+      </nav>
+
+      <div id="page-container">
+        <div id="page-installer" class="page active"></div>
+        <div id="page-themes" class="page"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

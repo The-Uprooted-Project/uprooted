@@ -32,4 +32,4 @@
 
 ## license
 
-[uprooted license v1.0](LICENSE) — use pieces with credit, don't redistribute the whole thing
+[uprooted license v1.0](LICENSE) - use pieces with credit, don't redistribute the whole thing
