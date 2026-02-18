@@ -1,5 +1,5 @@
 #!/bin/bash
-# Uprooted Linux Installer v0.3.42
+# Uprooted Linux Installer v0.3.43
 # Standalone bash installer for systems without the GUI installer.
 #
 # Usage: ./install-uprooted-linux.sh [--root-path /path/to/Root.AppImage]
@@ -22,7 +22,7 @@ set -euo pipefail
 INSTALL_DIR="$HOME/.local/share/uprooted"
 PROFILE_DIR="$HOME/.local/share/Root Communications/Root/profile/default"
 PROFILER_GUID="{D1A6F5A0-1234-4567-89AB-CDEF01234567}"
-VERSION="0.3.42"
+VERSION="0.3.43"
 ARTIFACTS_URL="https://github.com/watchthelight/uprooted/releases/download/v${VERSION}/uprooted-linux-artifacts.tar.gz"
 
 # Colors
@@ -566,8 +566,16 @@ deploy_artifacts() {
     if [[ "$USE_PREBUILT" == true ]]; then
         download_prebuilt
     else
-        check_prereqs
-        build_artifacts
+        # Auto-detect: if we're not inside the full repo, fall back to prebuilt
+        local script_dir
+        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        if [[ ! -f "$script_dir/package.json" ]]; then
+            log "Standalone script detected (no repo found). Using pre-built artifacts."
+            download_prebuilt
+        else
+            check_prereqs
+            build_artifacts
+        fi
     fi
 }
 

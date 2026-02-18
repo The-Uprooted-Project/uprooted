@@ -4,9 +4,10 @@ All notable changes to Uprooted are documented here. This file mirrors the [GitH
 
 ---
 
-## [v0.3.42](https://github.com/watchthelight/uprooted/releases/tag/v0.3.42) — 2026-02-18
+## [v0.3.43](https://github.com/watchthelight/uprooted/releases/tag/v0.3.43) — 2026-02-18
 
 ### Fixed
+- Linux installer: standalone `.sh` script now auto-uses pre-built artifacts (no more `pnpm` error when run from Downloads)
 - Skip Root server invite links (rootapp.gg) — Root renders these natively
 - Fallback domain card for URLs with no metadata (login redirects, JS-only pages)
 
