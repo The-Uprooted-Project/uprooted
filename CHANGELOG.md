@@ -4,6 +4,11 @@ All notable changes to Uprooted are documented here. This file mirrors the [GitH
 
 ---
 
+## [v0.3.41](https://github.com/watchthelight/uprooted/releases/tag/v0.3.41) — 2026-02-18
+
+### Fixed
+- Link embeds now show a minimal domain card when URLs return no metadata (login redirects, JS-only pages)
+
 ## [v0.3.3](https://github.com/watchthelight/uprooted/releases/tag/v0.3.3) — 2026-02-17
 
 ### New
