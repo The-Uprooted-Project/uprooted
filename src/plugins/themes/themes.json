@@ -2,8 +2,8 @@
   {
     "name": "default",
     "display_name": "Default Dark",
-    "description": "Built-in dark theme",
-    "author": "default",
+    "description": "Root's built-in dark theme",
+    "author": "Root Communications",
     "variables": {},
     "preview_colors": {
       "background": "#0D1521",
@@ -58,6 +58,30 @@
       "text": "#F0ECE0",
       "accent": "#2A5A40",
       "border": "#3D4A35"
+    }
+  },
+  {
+    "name": "cosmic-smoothie",
+    "display_name": "Cosmic Smoothie",
+    "description": "Deep purple space",
+    "author": "watchthelight",
+    "variables": {
+      "--rootsdk-brand-primary": "#7328BA",
+      "--rootsdk-brand-secondary": "#8A3FD2",
+      "--rootsdk-brand-tertiary": "#5C1E98",
+      "--rootsdk-background-primary": "#0A041E",
+      "--rootsdk-background-secondary": "#100822",
+      "--rootsdk-background-tertiary": "#060216",
+      "--rootsdk-input": "#080318",
+      "--rootsdk-border": "#302040",
+      "--rootsdk-link": "#A15DE6",
+      "--rootsdk-muted": "#584870"
+    },
+    "preview_colors": {
+      "background": "#0A041E",
+      "text": "#F4ECF8",
+      "accent": "#7328BA",
+      "border": "#302040"
     }
   },
   {

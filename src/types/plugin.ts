@@ -4,10 +4,15 @@ export interface Author {
 }
 
 export interface Patch {
+  /** Bridge to intercept: "nativeToWebRtc" or "webRtcToNative" */
   bridge: "nativeToWebRtc" | "webRtcToNative";
+  /** Method name on the bridge to intercept */
   method: string;
+  /** Called before the original method. Return false to cancel the call. */
   before?(args: unknown[]): boolean | void | Promise<boolean | void>;
+  /** Called after the original method with its return value. */
   after?(result: unknown, args: unknown[]): void | Promise<void>;
+  /** Replace the original method entirely. */
   replace?(...args: unknown[]): unknown | Promise<unknown>;
 }
 
@@ -26,9 +31,16 @@ export interface UprootedPlugin {
   description: string;
   version: string;
   authors: Author[];
+
+  /** Called when the plugin is enabled. */
   start?(): void | Promise<void>;
+  /** Called when the plugin is disabled. */
   stop?(): void | Promise<void>;
+
+  /** Bridge method intercepts applied while the plugin is active. */
   patches?: Patch[];
+  /** CSS injected into the page while the plugin is active. */
   css?: string;
+  /** Plugin-specific settings schema. */
   settings?: SettingsDefinition;
 }

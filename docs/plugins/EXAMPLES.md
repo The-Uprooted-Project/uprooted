@@ -1,10 +1,33 @@
-# examples
+# Example Plugins
 
-copy-paste plugin examples.
+Copy-paste example plugins demonstrating common patterns. Each example is a complete, self-contained plugin.
 
-## minimal template
+> **Related Docs:**
+> [Getting Started](GETTING_STARTED.md) |
+> [API Reference](API_REFERENCE.md) |
+> [Bridge Reference](BRIDGE_REFERENCE.md)
 
-bare minimum plugin:
+## Table of Contents
+
+- [Minimal Template](#minimal-template) -- Beginner
+- [Theme Logger](#theme-logger) -- Beginner
+- [Bridge Event Logger](#bridge-event-logger) -- Beginner
+- [Anti-Kick](#anti-kick) -- Beginner
+- [Voice Activity Monitor](#voice-activity-monitor) -- Intermediate
+- [Custom Theme](#custom-theme) -- Beginner
+- [Settings Example](#settings-example) -- Intermediate
+- [DOM Injector](#dom-injector) -- Intermediate
+- [Notification Interceptor](#notification-interceptor) -- Intermediate
+- [Call Logger](#call-logger) -- Advanced
+- [CSS Theme Switcher](#css-theme-switcher) -- Advanced
+
+---
+
+## Minimal Template
+
+**Difficulty: Beginner**
+
+The absolute bare minimum plugin. Use this as your starting point.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -25,11 +48,15 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-register in `src/core/preload.ts` with `loader.register(myPlugin)`.
+To register: add `import myPlugin from "../plugins/my-plugin/index.js";` and `loader.register(myPlugin);` in `src/core/preload.ts`.
 
-## theme logger
+---
 
-logs theme changes via bridge interception:
+## Theme Logger
+
+**Difficulty: Beginner**
+
+Uses a `before` patch handler to log every theme change. Demonstrates basic bridge interception.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -60,15 +87,23 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## bridge event logger
+**Key concepts:** `before` handler, accessing `args`, using `nativeLog`. See [API Reference -- Patch Interface](API_REFERENCE.md#patch-interface) for handler details.
 
-logs all bridge events for debugging:
+---
+
+## Bridge Event Logger
+
+**Difficulty: Beginner**
+
+Logs all bridge events to the console for debugging and development. Useful when you want to understand what bridge calls Root makes in response to user actions.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
 import type { Patch } from "../../types/plugin.js";
 import { nativeLog } from "../../api/native.js";
 
+// All known nativeToWebRtc methods (42 methods)
+// See BRIDGE_REFERENCE.md for the full list
 const nativeToWebRtcMethods = [
   "initialize", "disconnect",
   "setIsVideoOn", "setIsScreenShareOn", "setIsAudioOn",
@@ -88,6 +123,7 @@ const nativeToWebRtcMethods = [
   "getNativeLoopbackAudioTrack", "stopNativeLoopbackAudio",
 ];
 
+// All known webRtcToNative methods (29 methods)
 const webRtcToNativeMethods = [
   "initialized", "disconnected", "failed",
   "localAudioStarted", "localAudioStopped", "localAudioFailed",
@@ -155,7 +191,7 @@ export default {
   ],
 
   start() {
-    nativeLog(`Bridge Event Logger active - monitoring ${this.patches!.length} methods`);
+    nativeLog(`Bridge Event Logger active — monitoring ${this.patches!.length} methods`);
     nativeLog("Tip: Use settings to filter which directions are logged.");
   },
 
@@ -165,11 +201,17 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-generates a lot of output. `receiveRawPacket` and `setSpeaking` fire constantly during calls.
+**Key concepts:** Dynamic patch generation for all known methods, `JSON.stringify` for readable arg output, configurable settings to reduce noise. The full bridge method list comes from [BRIDGE_REFERENCE.md](BRIDGE_REFERENCE.md).
 
-## anti-kick
+> **Note:** This plugin generates a lot of log output. The `receiveRawPacket` and `setSpeaking` methods fire very frequently during calls. Consider filtering them out (check the `skipNoisy` setting pattern) for normal use.
 
-blocks kick commands in both directions:
+---
+
+## Anti-Kick
+
+**Difficulty: Beginner**
+
+Uses a `before` handler that returns `false` to cancel bridge calls. Blocks both directions of kick commands.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -187,7 +229,7 @@ export default {
       method: "kick",
       before(args) {
         nativeLog(`Blocked outgoing kick for user: ${args[0]}`);
-        return false;
+        return false; // Cancel the kick
       },
     },
     {
@@ -202,16 +244,22 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## voice activity monitor
+**Key concepts:** Returning `false` from `before` to cancel, patching both bridge directions, different method names for the same action (`kick` vs `kickPeer`). See [Bridge Reference -- kick](BRIDGE_REFERENCE.md#kickuserid) and [Bridge Reference -- kickPeer](BRIDGE_REFERENCE.md#kickpeeruserid).
 
-tracks who's speaking with a live indicator:
+---
+
+## Voice Activity Monitor
+
+**Difficulty: Intermediate**
+
+Monitors speaking events and injects a CSS indicator showing who's talking. Demonstrates `before` handlers, CSS injection, and DOM manipulation.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
 import type { UserGuid, DeviceGuid } from "../../types/bridge.js";
 import { injectCss, removeCss } from "../../api/css.js";
 
-let speakingUsers = new Map<string, string>();
+let speakingUsers = new Map<string, string>(); // userId -> deviceId
 let indicator: HTMLDivElement | null = null;
 
 function updateIndicator(): void {
@@ -279,14 +327,21 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## custom theme
+**Key concepts:** Using `css` field + DOM elements together, tracking state across events, cleaning up in `stop()`. The `setSpeaking` bridge method is documented in [Bridge Reference -- setSpeaking](BRIDGE_REFERENCE.md#setspeakingisspeaking-deviceid-userid).
 
-applies css variable overrides for a custom color scheme:
+---
+
+## Custom Theme
+
+**Difficulty: Beginner**
+
+Applies a custom color scheme by overriding Root's CSS variables. Demonstrates the native API for theming.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
 import { setCssVariables, removeCssVariable } from "../../api/native.js";
 
+// All the variables we override (for cleanup)
 const THEME_VARS: Record<string, string> = {
   "--rootsdk-brand-primary": "#e11d48",
   "--rootsdk-brand-secondary": "#fb7185",
@@ -318,9 +373,17 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## settings example
+**Key concepts:** `setCssVariables` for batch overrides, `removeCssVariable` for cleanup, using `--rootsdk-*` override pattern.
 
-all four setting types with runtime reading:
+See [ROOT_ENVIRONMENT.md](ROOT_ENVIRONMENT.md#css-variable-system) for the full list of overridable variables and the two-layer variable architecture.
+
+---
+
+## Settings Example
+
+**Difficulty: Intermediate**
+
+Demonstrates all four setting types (boolean, string, number, select) and reading them at runtime.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -360,6 +423,7 @@ export default {
   },
 
   start() {
+    // Read settings with fallbacks
     const config = window.__UPROOTED_SETTINGS__?.plugins?.["settings-demo"]?.config;
     const enabled = (config?.enabled as boolean) ?? true;
     const label = (config?.label as string) ?? "Uprooted";
@@ -400,9 +464,15 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## dom injector
+**Key concepts:** All four `SettingField` types (defined in `src/types/plugin.ts:23`), reading config from `__UPROOTED_SETTINGS__`, fallback defaults, dynamic CSS based on settings. See [API Reference -- Settings Definition](API_REFERENCE.md#settings-definition).
 
-waits for a DOM element, injects content, re-injects on re-renders:
+---
+
+## DOM Injector
+
+**Difficulty: Intermediate**
+
+Waits for a specific DOM element, injects custom content, and uses MutationObserver to re-inject if Root removes it. Demonstrates the DOM API.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -430,12 +500,18 @@ export default {
 
   async start() {
     try {
+      // Wait for the title element to appear (up to 15 seconds)
       const title = await waitForElement<HTMLElement>("h1, [class*='title']", 15000);
+
+      // Inject badge
       const injectBadge = () => {
-        if (document.getElementById("dom-injector-badge")) return;
+        if (document.getElementById("dom-injector-badge")) return; // Already there
         title.parentElement?.appendChild(createBadge());
       };
+
       injectBadge();
+
+      // Watch for React re-renders that might remove our badge
       if (title.parentElement) {
         disconnect = observe(title.parentElement, () => {
           if (!document.getElementById("dom-injector-badge")) {
@@ -457,9 +533,15 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## notification interceptor
+**Key concepts:** `waitForElement` with timeout (defined in `src/api/dom.ts:9`), `observe` for re-injection on React re-renders (defined in `src/api/dom.ts:44`), cleanup in `stop()`, error handling with `nativeLog`. See [Getting Started -- Tutorial 5: DOM Injection](GETTING_STARTED.md#tutorial-5-dom-injection) for a detailed walkthrough.
 
-custom on-screen toast notifications for bridge events:
+---
+
+## Notification Interceptor
+
+**Difficulty: Intermediate**
+
+Intercepts bridge events related to user state changes and displays custom on-screen notifications. Demonstrates multi-method patching, DOM creation, and timed cleanup.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -482,6 +564,7 @@ function showNotification(message: string, color = "#2D7D46"): void {
 
   notificationContainer.appendChild(toast);
 
+  // Auto-remove after 4 seconds with a fade-out
   setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateX(120%)";
@@ -540,6 +623,7 @@ export default {
   },
 
   patches: [
+    // Speaking start/stop (used to detect join/leave presence)
     {
       bridge: "webRtcToNative",
       method: "setSpeaking",
@@ -550,6 +634,8 @@ export default {
         }
       },
     },
+
+    // Theme changes
     {
       bridge: "nativeToWebRtc",
       method: "setTheme",
@@ -557,6 +643,8 @@ export default {
         showNotification(`Theme changed to: ${args[0]}`, "#3B6AF8");
       },
     },
+
+    // Mute/deafen
     {
       bridge: "nativeToWebRtc",
       method: "setMute",
@@ -573,6 +661,8 @@ export default {
         showNotification(isDeafened ? "You are now deafened" : "You are now undeafened", "#E88F3D");
       },
     },
+
+    // Moderation actions
     {
       bridge: "nativeToWebRtc",
       method: "kick",
@@ -591,6 +681,8 @@ export default {
         );
       },
     },
+
+    // Session lifecycle
     {
       bridge: "webRtcToNative",
       method: "initialized",
@@ -621,9 +713,15 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## call logger
+**Key concepts:** Multi-method patching across both bridges, dynamic DOM element creation for toast notifications, CSS using Root's theme variables (`var(--color-background-secondary)`), auto-cleanup with `setTimeout`, plugin settings for filtering notification types.
 
-monitors bridge methods for the full voice call lifecycle:
+---
+
+## Call Logger
+
+**Difficulty: Advanced**
+
+Monitors multiple bridge methods to log the full lifecycle of a voice call. Demonstrates multi-method patching with dynamic patch generation.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -631,10 +729,12 @@ import type { Patch } from "../../types/plugin.js";
 import type { InitializeDesktopWebRtcPayload, Theme } from "../../types/bridge.js";
 import { nativeLog } from "../../api/native.js";
 
+// Format a timestamp for log lines
 function ts(): string {
   return new Date().toLocaleTimeString("en-US", { hour12: false });
 }
 
+// Build patches dynamically for cleaner code
 function logPatch(
   bridge: "nativeToWebRtc" | "webRtcToNative",
   method: string,
@@ -657,6 +757,7 @@ export default {
   authors: [{ name: "YourName" }],
 
   patches: [
+    // Session lifecycle
     logPatch("nativeToWebRtc", "initialize", (args) => {
       const s = args[0] as InitializeDesktopWebRtcPayload;
       return `channel=${s.channelId}, user=${s.userId}`;
@@ -665,24 +766,32 @@ export default {
     logPatch("webRtcToNative", "initialized"),
     logPatch("webRtcToNative", "disconnected"),
     logPatch("webRtcToNative", "failed", (args) => JSON.stringify(args[0])),
+
+    // Media toggles
     logPatch("nativeToWebRtc", "setIsAudioOn"),
     logPatch("nativeToWebRtc", "setIsVideoOn"),
     logPatch("nativeToWebRtc", "setIsScreenShareOn"),
+
+    // User state
     logPatch("nativeToWebRtc", "setMute"),
     logPatch("nativeToWebRtc", "setDeafen"),
     logPatch("nativeToWebRtc", "setHandRaised"),
     logPatch("nativeToWebRtc", "setTheme", (args) => args[0] as string),
+
+    // Remote events
     logPatch("webRtcToNative", "setSpeaking", (args) => {
       const [speaking, , userId] = args;
       return `${userId} ${speaking ? "started" : "stopped"} speaking`;
     }),
+
+    // Moderation
     logPatch("nativeToWebRtc", "kick"),
     logPatch("nativeToWebRtc", "setAdminMute"),
     logPatch("nativeToWebRtc", "setAdminDeafen"),
   ],
 
   start() {
-    nativeLog(`[${ts()}] Call Logger active - monitoring ${this.patches!.length} methods`);
+    nativeLog(`[${ts()}] Call Logger active — monitoring ${this.patches!.length} methods`);
   },
 
   stop() {
@@ -691,9 +800,15 @@ export default {
 } satisfies UprootedPlugin;
 ```
 
-## css theme switcher
+**Key concepts:** Dynamic patch generation with a helper function, formatting args per-method, monitoring both bridge directions, timestamp logging, using `this.patches` to reference own config. For the full list of interceptable methods, see [BRIDGE_REFERENCE.md](BRIDGE_REFERENCE.md).
 
-hotkey-driven theme switching with smooth transitions. ctrl+shift+t cycles presets, ctrl+shift+0 resets:
+---
+
+## CSS Theme Switcher
+
+**Difficulty: Advanced**
+
+A plugin that provides hotkey-driven theme switching with smooth CSS transitions. Demonstrates CSS variable overrides, bridge interception for theme sync, and keyboard event handling.
 
 ```typescript
 import type { UprootedPlugin } from "../../types/plugin.js";
@@ -702,6 +817,7 @@ import { setCssVariables, removeCssVariable, getCurrentTheme } from "../../api/n
 import { injectCss, removeCss } from "../../api/css.js";
 import { nativeLog } from "../../api/native.js";
 
+// Define theme presets with full variable overrides
 const THEME_PRESETS: Record<string, Record<string, string>> = {
   midnight: {
     "--rootsdk-brand-primary": "#6366f1",
@@ -749,7 +865,7 @@ for (const vars of Object.values(THEME_PRESETS)) {
 }
 
 const presetNames = Object.keys(THEME_PRESETS);
-let currentPresetIndex = -1;
+let currentPresetIndex = -1; // -1 means "no custom preset active"
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
 function clearCustomTheme(): void {
@@ -776,6 +892,7 @@ export default {
   authors: [{ name: "YourName" }],
 
   css: `
+    /* Smooth transitions when switching themes */
     :root {
       transition: --rootsdk-brand-primary 0.3s,
                   --rootsdk-background-primary 0.3s,
@@ -791,9 +908,11 @@ export default {
       bridge: "nativeToWebRtc",
       method: "setTheme",
       before(args) {
+        // When Root changes theme, clear our custom overrides so they
+        // don't conflict with Root's built-in theme
         if (currentPresetIndex >= 0) {
           clearCustomTheme();
-          nativeLog("Theme Switcher: cleared custom theme (app theme changed)");
+          nativeLog("Theme Switcher: cleared custom theme (Root theme changed)");
         }
       },
     },
@@ -801,6 +920,7 @@ export default {
 
   start() {
     keydownHandler = (e: KeyboardEvent) => {
+      // Ctrl+Shift+T cycles through presets, Ctrl+Shift+0 resets
       if (e.ctrlKey && e.shiftKey && e.key === "T") {
         e.preventDefault();
         const nextIndex = (currentPresetIndex + 1) % presetNames.length;
@@ -813,7 +933,7 @@ export default {
     };
 
     document.addEventListener("keydown", keydownHandler);
-    nativeLog(`Theme Switcher active - Ctrl+Shift+T to cycle (${presetNames.length} presets), Ctrl+Shift+0 to reset`);
+    nativeLog(`Theme Switcher active — Ctrl+Shift+T to cycle (${presetNames.length} presets), Ctrl+Shift+0 to reset`);
   },
 
   stop() {
@@ -825,3 +945,5 @@ export default {
   },
 } satisfies UprootedPlugin;
 ```
+
+**Key concepts:** Multiple theme preset definitions using `--rootsdk-*` variables, keyboard event handling with cleanup, bridge patch to detect when Root changes theme (so custom overrides don't conflict), CSS transition injection for smooth theme changes, full cleanup in `stop()`. See [Root Environment -- CSS Variable System](ROOT_ENVIRONMENT.md#css-variable-system) for how the variable override system works.

@@ -1,0 +1,277 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="uprooted">
+  <div class="page">
+    <div class="columns">
+      <div class="left">
+        <h1>uprooted <span class="version">0.3.4</span></h1>
+        <p class="sub">a client mod framework for root communications.</p>
+
+        <ul class="features">
+          <li>custom themes <span class="tag">working</span></li>
+          <li>sentry blocker <span class="tag">working</span></li>
+          <li>plugins <span class="tag">working</span></li>
+          <li>bridge api <span class="tag tag-planned">planned</span></li>
+          <li>settings injection <span class="tag">working</span></li>
+        </ul>
+
+        <a href="https://github.com/watchthelight/uprooted/releases/latest" class="download-btn">download</a>
+
+        <nav>
+          <a href="https://github.com/watchthelight/uprooted">source</a>
+          <span class="dot">&middot;</span>
+          <a href="https://rootapp.gg/AC0ILwUxgQqJ2MOSMXdGjw">server</a>
+          <span class="dot">&middot;</span>
+          <a href="https://github.com/watchthelight/uprooted/blob/main/LICENSE" class="dim">license</a>
+        </nav>
+      </div>
+
+      <div class="right">
+        <div class="policy">
+          <p>uprooted is a <strong>working beta</strong>. custom themes and the sentry blocker plugin ship with the framework. everything is configurable from Root's native settings panel.</p>
+          <p>root's <a href="https://root.gg/terms">terms</a> prohibit reverse engineering and modification of the service. we believe cosmetic client mods can coexist with that policy.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tos-box">
+      <div class="tos-label">terms of use</div>
+      <ol class="tos">
+        <li><strong>do not distribute</strong> uprooted or its artifacts outside of the official repository.</li>
+        <li><strong>do not discuss</strong> uprooted in Root's public channels, servers, or support.</li>
+        <li>violations will result in your UUID being <strong>permanently blacklisted</strong>.</li>
+      </ol>
+      <p class="tos-note">if you want to share uprooted, send them a link to the <a href="https://github.com/watchthelight/uprooted">repository</a>.</p>
+    </div>
+
+    <p class="footer dim">not affiliated with root communications.</p>
+  </div>
+</Layout>
+
+<style>
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .columns {
+    display: flex;
+    gap: 64px;
+    align-items: flex-start;
+  }
+
+  .left {
+    flex: 0 0 auto;
+  }
+
+  .right {
+    flex: 1;
+    padding-top: 4px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .version {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--dim);
+    letter-spacing: 0.02em;
+  }
+
+  .tag {
+    font-size: 10px;
+    color: var(--green);
+    border: 1px solid rgba(106, 154, 110, 0.3);
+    padding: 1px 6px;
+    margin-left: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  .tag-planned {
+    color: #c89040;
+    border-color: rgba(200, 144, 64, 0.3);
+  }
+
+  .sub {
+    color: var(--dim);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .features {
+    list-style: none;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .features li::before {
+    content: "- ";
+    color: var(--dim);
+  }
+
+  .download-btn {
+    display: inline-block;
+    background: var(--green);
+    color: #08080c;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 8px 24px;
+    margin-bottom: 16px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .download-btn:hover {
+    background: #7fb882;
+    text-decoration: none;
+  }
+
+  nav {
+    font-size: 13px;
+  }
+
+  .dot {
+    color: var(--dim);
+    margin: 0 6px;
+  }
+
+  .dim {
+    color: var(--dim);
+  }
+
+  .policy {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--dim);
+    border-left: 2px solid var(--dim);
+    padding-left: 16px;
+  }
+
+  .policy strong {
+    color: var(--text);
+  }
+
+  .policy p + p {
+    margin-top: 12px;
+  }
+
+  .tos-box {
+    margin-top: 32px;
+    border: 1px solid rgba(200, 80, 80, 0.25);
+    background: rgba(200, 80, 80, 0.04);
+    padding: 16px 20px;
+  }
+
+  .tos-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c85050;
+    margin-bottom: 10px;
+  }
+
+  .tos {
+    list-style: none;
+    counter-reset: tos;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .tos li {
+    counter-increment: tos;
+    padding: 2px 0;
+  }
+
+  .tos li::before {
+    content: counter(tos) ". ";
+    color: #c85050;
+    font-weight: 700;
+    display: none;
+  }
+
+  .tos li strong {
+    color: #c85050;
+  }
+
+  .tos-note {
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 10px;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 24px;
+    left: 32px;
+    font-size: 11px;
+  }
+
+  @media (max-width: 640px) {
+    .columns {
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .page {
+      padding: 0 20px;
+    }
+
+    .footer {
+      left: 20px;
+    }
+  }
+
+  :global(html.dyslexia) .page {
+    height: auto;
+    min-height: 100vh;
+    padding-top: 64px;
+    padding-bottom: 48px;
+  }
+
+  :global(html.dyslexia) .columns {
+    gap: 40px;
+  }
+
+  :global(html.dyslexia) .footer {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    margin-top: 32px;
+  }
+
+  :global(html.dyslexia) .policy {
+    font-size: 12.5px;
+  }
+
+  :global(html.dyslexia) .tos {
+    font-size: 11.5px;
+  }
+
+  @media (max-width: 640px) {
+    :global(html.dyslexia) .page {
+      padding-top: 72px;
+    }
+  }
+</style>
