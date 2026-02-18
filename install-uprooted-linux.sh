@@ -1,5 +1,5 @@
 #!/bin/bash
-# Uprooted Linux Installer v0.3.41
+# Uprooted Linux Installer v0.3.42
 # Standalone bash installer for systems without the GUI installer.
 #
 # Usage: ./install-uprooted-linux.sh [--root-path /path/to/Root.AppImage]
@@ -22,7 +22,7 @@ set -euo pipefail
 INSTALL_DIR="$HOME/.local/share/uprooted"
 PROFILE_DIR="$HOME/.local/share/Root Communications/Root/profile/default"
 PROFILER_GUID="{D1A6F5A0-1234-4567-89AB-CDEF01234567}"
-VERSION="0.3.41"
+VERSION="0.3.42"
 ARTIFACTS_URL="https://github.com/watchthelight/uprooted/releases/download/v${VERSION}/uprooted-linux-artifacts.tar.gz"
 
 # Colors
