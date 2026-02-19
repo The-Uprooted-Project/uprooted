@@ -81,7 +81,7 @@ All notable changes to Uprooted are documented here. This file mirrors the [GitH
 - **Console TUI installer** replacing Tauri GUI (~600KB vs ~100MB)
 - **`--debug` CLI mode** with live installation diagnostics
 - **Link embeds plugin** — Discord-style OpenGraph previews and inline YouTube players
-- Dual-prefix environment variables (`DOTNET_` + `CORECLR_`) for .NET 8/9/10 compatibility
+- Improved .NET version compatibility for the profiler loader across .NET 8, 9, and 10
 - KDE Plasma environment variable propagation for profiler loading on Linux
 
 ### Improvements
@@ -89,7 +89,7 @@ All notable changes to Uprooted are documented here. This file mirrors the [GitH
 - Hook log now read from profile directory instead of deploy directory
 
 ### Fixes
-- Fixed profiler GUID comparison on Linux (unsigned long, 8 bytes on x64)
+- Fixed Linux profiler identification crash (LP64 integer size mismatch)
 - Fixed `Assembly.CreateInstance` — replaced with `GetType` + `Activator.CreateInstance`
 - Fixed Wayland white/blank window (disabled WebKitGTK GPU compositing)
 - Enforced LF line endings in bash installer

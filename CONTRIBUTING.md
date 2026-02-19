@@ -22,8 +22,8 @@ All contributors must push to the `contrib` branch or a feature branch off `cont
 
 ```bash
 # Standard workflow
-git clone https://github.com/watchthelight/uprooted-private.git
-cd uprooted-private
+git clone https://github.com/watchthelight/uprooted.git
+cd uprooted
 git checkout contrib
 # make your changes, then:
 git push origin contrib
@@ -58,8 +58,8 @@ Always pull before starting work -- another contributor may have pushed changes.
 ### Clone and Setup
 
 ```bash
-git clone https://github.com/watchthelight/uprooted-private.git
-cd uprooted-private
+git clone https://github.com/watchthelight/uprooted.git
+cd uprooted
 git checkout contrib
 pnpm install
 ```
@@ -189,13 +189,18 @@ Keep PRs focused. One logical change per PR is easier to review than a grab-bag 
 
 ## Critical Rules
 
-These constraints exist because violating them causes real, hard-to-diagnose bugs. See [Architecture](docs/framework/ARCHITECTURE.md) for detailed explanations.
+These constraints prevent hard-to-diagnose bugs in the hook environment. Violations may not
+surface immediately and can cause silent failures or UI freezes.
 
-- **Never use `Type.GetType()` for Avalonia types** -- use `AvaloniaReflection`
-- **Never modify `ContentControl.Content` directly** -- causes UI freeze; use Grid overlay
-- **Never use `System.Text.Json` in the hook** -- causes `MissingMethodException` in profiler context
-- **Never use `EventInfo.AddEventHandler` for RoutedEvents** -- use Expression lambdas
-- **Never use `localStorage`** -- Root runs Chromium with `--incognito`
+- **Avalonia types must be resolved through the provided reflection utilities** — do not use
+  `Type.GetType()` directly for Avalonia types
+- **Do not assign directly to `ContentControl.Content`** — causes a UI freeze; use a Grid
+  overlay instead
+- **Do not use `System.Text.Json`** — not available in the hook context; use the built-in
+  INI-based settings API
+- **Do not use `AddEventHandler` from `EventInfo`** for Avalonia routed events — use
+  Expression-based lambda subscription instead
+- **Do not use `localStorage`** — Root runs Chromium with `--incognito`
 - **`DispatcherPriority` is a struct, not an enum** in Avalonia 11+
 
 ---
