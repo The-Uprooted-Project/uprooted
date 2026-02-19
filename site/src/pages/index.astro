@@ -31,28 +31,28 @@ import Layout from "../layouts/Layout.astro";
       </div>
 
       <div class="right">
-        <div class="features-grid">
-          <div class="feature"><span class="fname">custom themes</span><span class="tag">working</span></div>
-          <div class="feature"><span class="fname">sentry blocker</span><span class="tag">working</span></div>
-          <div class="feature"><span class="fname">plugins</span><span class="tag">working</span></div>
-          <div class="feature"><span class="fname">bridge api</span><span class="tag">working</span></div>
-          <div class="feature"><span class="fname">settings injection</span><span class="tag">working</span></div>
-          <div class="feature"><span class="fname">link embeds</span><span class="tag tag-beta">beta</span></div>
-          <div class="feature"><span class="fname">message logger</span><span class="tag tag-beta">beta</span></div>
-          <div class="feature"><span class="fname">auto-updater</span><span class="tag">working</span></div>
-          <div class="feature"><span class="fname">silent typing</span><span class="tag tag-beta">beta</span></div>
-          <div class="feature"><span class="fname">clearurls</span><span class="tag">working</span></div>
+        <div class="features">
+          <div class="feature"><span>custom themes</span><span class="tag">working</span></div>
+          <div class="feature"><span>sentry blocker</span><span class="tag">working</span></div>
+          <div class="feature"><span>plugins</span><span class="tag">working</span></div>
+          <div class="feature"><span>bridge api</span><span class="tag">working</span></div>
+          <div class="feature"><span>settings injection</span><span class="tag">working</span></div>
+          <div class="feature"><span>link embeds</span><span class="tag tag-beta">beta</span></div>
+          <div class="feature"><span>message logger</span><span class="tag tag-beta">beta</span></div>
+          <div class="feature"><span>auto-updater</span><span class="tag">working</span></div>
+          <div class="feature"><span>silent typing</span><span class="tag tag-beta">beta</span></div>
+          <div class="feature"><span>clearurls</span><span class="tag">working</span></div>
         </div>
       </div>
     </div>
 
     <div class="tos-box">
-      <span class="tos-label">terms of use</span>
-      <div class="tos-items">
-        <span><strong>do not distribute</strong> uprooted or its artifacts outside of the official repository.</span>
-        <span><strong>do not discuss</strong> uprooted in Root's public channels, servers, or support.</span>
-        <span>violations will result in your UUID being <strong>permanently blacklisted</strong>.</span>
-      </div>
+      <span class="tos-label">terms<br/>of use</span>
+      <ul class="tos-items">
+        <li><strong>do not distribute</strong> uprooted or its artifacts outside of the official repository.</li>
+        <li><strong>do not discuss</strong> uprooted in Root's public channels, servers, or support.</li>
+        <li>violations will result in your UUID being <strong>permanently blacklisted</strong>.</li>
+      </ul>
       <span class="tos-note">to share uprooted, send a link to the <a href="https://github.com/watchthelight/uprooted">repository</a>.</span>
     </div>
 
@@ -79,21 +79,21 @@ import Layout from "../layouts/Layout.astro";
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 28px;
+    gap: 24px;
   }
 
-  /* === main: left (identity) | right (features) === */
+  /* ── main two-column ── */
   .main {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 72px;
+    gap: 64px;
     align-items: center;
   }
 
   .left {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
   }
 
   .header {
@@ -135,7 +135,6 @@ import Layout from "../layouts/Layout.astro";
     display: flex;
     align-items: center;
     gap: 18px;
-    flex-wrap: wrap;
   }
 
   .download-btn {
@@ -171,32 +170,24 @@ import Layout from "../layouts/Layout.astro";
     color: var(--dim);
   }
 
-  /* === features grid === */
+  /* ── feature list (single column, full width) ── */
   .right {
     border-left: 1px solid var(--faint);
     padding-left: 48px;
   }
 
-  .features-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 24px;
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
   }
 
   .feature {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
     font-size: 13px;
     color: var(--text);
-    min-width: 0;
-  }
-
-  .fname {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .tag {
@@ -206,7 +197,6 @@ import Layout from "../layouts/Layout.astro";
     border: 1px solid rgba(106, 154, 110, 0.3);
     padding: 1px 6px;
     letter-spacing: 0.04em;
-    white-space: nowrap;
   }
 
   .tag-beta {
@@ -214,33 +204,35 @@ import Layout from "../layouts/Layout.astro";
     border-color: rgba(200, 144, 64, 0.3);
   }
 
-  /* === tos: single compact row === */
+  /* ── tos: label | items | note ── */
   .tos-box {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0 20px;
+    align-items: start;
     border: 1px solid rgba(200, 80, 80, 0.2);
     background: rgba(200, 80, 80, 0.03);
     padding: 10px 16px;
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    flex-wrap: wrap;
-    font-size: 11.5px;
   }
 
   .tos-label {
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #c85050;
-    font-size: 10px;
-    flex-shrink: 0;
+    line-height: 1.35;
+    padding-top: 1px;
   }
 
   .tos-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 20px;
+    list-style: none;
+    font-size: 11px;
     color: var(--text);
-    flex: 1;
+    line-height: 1.55;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
   }
 
   .tos-items strong {
@@ -248,15 +240,17 @@ import Layout from "../layouts/Layout.astro";
   }
 
   .tos-note {
+    font-size: 11px;
     color: var(--dim);
-    flex-shrink: 0;
+    padding-top: 1px;
+    white-space: nowrap;
   }
 
   .footer {
     font-size: 11px;
   }
 
-  /* === mobile === */
+  /* ── mobile ── */
   @media (max-width: 640px) {
     .page {
       display: none;
@@ -276,13 +270,13 @@ import Layout from "../layouts/Layout.astro";
     }
   }
 
-  /* === dyslexia mode === */
+  /* ── dyslexia ── */
   :global(html.dyslexia) .page {
-    gap: 22px;
+    gap: 20px;
   }
 
   :global(html.dyslexia) .main {
-    gap: 56px;
+    gap: 52px;
   }
 
   :global(html.dyslexia) .blurb,
@@ -291,11 +285,11 @@ import Layout from "../layouts/Layout.astro";
     line-height: 1.65;
   }
 
-  :global(html.dyslexia) .features-grid {
-    gap: 6px 24px;
+  :global(html.dyslexia) .features {
+    gap: 5px;
   }
 
-  :global(html.dyslexia) .tos-box {
-    font-size: 11px;
+  :global(html.dyslexia) .tos-items {
+    font-size: 10.5px;
   }
 </style>
