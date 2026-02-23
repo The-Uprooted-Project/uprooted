@@ -1,0 +1,406 @@
+﻿---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="uprooted">
+  <div class="page">
+    <div class="main">
+      <div class="left">
+        <div class="header">
+          <h1>uprooted <span class="version">0.5.0</span></h1>
+          <p class="sub">a client mod framework for root communications.</p>
+        </div>
+
+        <p class="blurb">
+          <strong>working beta.</strong> themes and sentry blocker ship by default.
+          all features configurable from root's native settings panel.
+          root's <a href="https://root.gg/terms">terms</a> prohibit reverse engineering —
+          we believe cosmetic mods can coexist with that policy.
+        </p>
+
+        <div class="cta">
+          <a href="https://github.com/The-Uprooted-Project/uprooted/releases/latest" class="download-btn">download</a>
+          <nav>
+            <a href="https://github.com/The-Uprooted-Project/uprooted">source</a>
+            <span class="dot">&middot;</span>
+            <a href="https://rootapp.gg/AC0ILwUxgQqJ2MOSMXdGjw">server</a>
+            <span class="dot">&middot;</span>
+            <a href="https://github.com/The-Uprooted-Project/uprooted/blob/main/LICENSE" class="dim">license</a>
+          </nav>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="features">
+          <div class="feature"><span>custom themes</span><span class="tag">working</span></div>
+          <div class="feature"><span>sentry blocker</span><span class="tag">working</span></div>
+          <div class="feature"><span>plugins</span><span class="tag">working</span></div>
+          <div class="feature"><span>bridge api</span><span class="tag">working</span></div>
+          <div class="feature"><span>settings injection</span><span class="tag">working</span></div>
+          <div class="feature"><span>link embeds</span><span class="tag tag-beta">beta</span></div>
+          <div class="feature"><span>message logger</span><span class="tag tag-beta">beta</span></div>
+          <div class="feature"><span>auto-updater</span><span class="tag">working</span></div>
+          <div class="feature"><span>silent typing</span><span class="tag tag-beta">beta</span></div>
+          <div class="feature"><span>clearurls</span><span class="tag">working</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tos-box">
+      <span class="tos-label">terms<br/>of use</span>
+      <ul class="tos-items">
+        <li><strong>do not distribute</strong> uprooted or its artifacts outside of the official repository.</li>
+        <li><strong>do not discuss</strong> uprooted in Root's public channels, servers, or support.</li>
+        <li>violations will result in your UUID being <strong>permanently blacklisted</strong>.</li>
+      </ul>
+      <span class="tos-note">to share uprooted, send a link to the <a href="https://github.com/The-Uprooted-Project/uprooted">repository</a>.</span>
+    </div>
+
+    <p class="footer dim">not affiliated with root communications.</p>
+  </div>
+
+  <div class="mobile-block">
+    <div class="mobile-content">
+      <div class="mobile-header">
+        <h1>uprooted <span class="version">0.5.0</span></h1>
+        <p class="sub">a client mod framework for root communications.</p>
+      </div>
+
+      <p class="mobile-blurb">
+        <strong>working beta.</strong> themes, plugins, and sentry blocker ship by default.
+        all features configurable from root's native settings panel.
+      </p>
+
+      <div class="mobile-features">
+        <div class="feature"><span>custom themes</span><span class="tag">working</span></div>
+        <div class="feature"><span>sentry blocker</span><span class="tag">working</span></div>
+        <div class="feature"><span>plugins</span><span class="tag">working</span></div>
+        <div class="feature"><span>link embeds</span><span class="tag tag-beta">beta</span></div>
+        <div class="feature"><span>message logger</span><span class="tag tag-beta">beta</span></div>
+        <div class="feature"><span>silent typing</span><span class="tag tag-beta">beta</span></div>
+        <div class="feature"><span>clearurls</span><span class="tag">working</span></div>
+        <div class="feature"><span>auto-updater</span><span class="tag">working</span></div>
+      </div>
+
+      <div class="mobile-platform-note">
+        <span>currently available on windows and linux.</span>
+      </div>
+
+      <div class="mobile-links">
+        <a href="https://rootapp.gg/AC0ILwUxgQqJ2MOSMXdGjw" class="server-btn">join the server</a>
+        <nav>
+          <a href="https://github.com/The-Uprooted-Project/uprooted/releases/latest">download</a>
+          <span class="dot">&middot;</span>
+          <a href="https://github.com/The-Uprooted-Project/uprooted">source</a>
+          <span class="dot">&middot;</span>
+          <a href="https://github.com/The-Uprooted-Project/uprooted/blob/main/LICENSE" class="dim">license</a>
+        </nav>
+      </div>
+
+      <p class="footer dim">not affiliated with root communications.</p>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .mobile-block {
+    display: none;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: 0 48px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  /* ── main two-column ── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .left {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .version {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--dim);
+    letter-spacing: 0.02em;
+  }
+
+  .sub {
+    color: var(--dim);
+    font-size: 13px;
+  }
+
+  .blurb {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--dim);
+  }
+
+  .blurb strong {
+    color: var(--text);
+  }
+
+  .cta {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .download-btn {
+    display: inline-block;
+    background: var(--green);
+    color: #08080c;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 8px 22px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .download-btn:hover {
+    background: #7fb882;
+    text-decoration: none;
+  }
+
+  nav {
+    font-size: 13px;
+  }
+
+  .dot {
+    color: var(--dim);
+    margin: 0 6px;
+  }
+
+  .dim {
+    color: var(--dim);
+  }
+
+  /* ── feature list (single column, full width) ── */
+  .right {
+    border-left: 1px solid var(--faint);
+    padding-left: 48px;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .feature {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    color: var(--green);
+    border: 1px solid rgba(106, 154, 110, 0.3);
+    padding: 1px 6px;
+    letter-spacing: 0.04em;
+  }
+
+  .tag-beta {
+    color: #c89040;
+    border-color: rgba(200, 144, 64, 0.3);
+  }
+
+  /* ── tos: label | items | note ── */
+  .tos-box {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0 20px;
+    align-items: start;
+    border: 1px solid rgba(200, 80, 80, 0.2);
+    background: rgba(200, 80, 80, 0.03);
+    padding: 10px 16px;
+  }
+
+  .tos-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c85050;
+    line-height: 1.35;
+    padding-top: 1px;
+  }
+
+  .tos-items {
+    list-style: none;
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.55;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .tos-items strong {
+    color: #c85050;
+  }
+
+  .tos-note {
+    font-size: 11px;
+    color: var(--dim);
+    padding-top: 1px;
+    white-space: nowrap;
+  }
+
+  .footer {
+    font-size: 11px;
+  }
+
+  /* ── mobile ── */
+  @media (max-width: 640px) {
+    .page {
+      display: none;
+    }
+
+    .mobile-block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 32px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mobile-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .mobile-content .mobile-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mobile-content h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text);
+    }
+
+    .mobile-blurb {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--dim);
+    }
+
+    .mobile-blurb strong {
+      color: var(--text);
+    }
+
+    .mobile-features {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-left: 1px solid var(--faint);
+      padding-left: 16px;
+    }
+
+    .mobile-platform-note {
+      font-size: 11px;
+      color: var(--dim);
+      border: 1px solid var(--faint);
+      padding: 8px 12px;
+    }
+
+    .mobile-links {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .server-btn {
+      display: inline-block;
+      background: var(--green);
+      color: #08080c;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 8px 22px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .server-btn:hover {
+      background: #7fb882;
+      text-decoration: none;
+    }
+
+    .mobile-links nav {
+      font-size: 13px;
+    }
+  }
+
+  /* ── dyslexia ── */
+  :global(html.dyslexia) .page {
+    gap: 20px;
+  }
+
+  :global(html.dyslexia) .main {
+    gap: 52px;
+  }
+
+  :global(html.dyslexia) .blurb,
+  :global(html.dyslexia) .sub {
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  :global(html.dyslexia) .features {
+    gap: 5px;
+  }
+
+  :global(html.dyslexia) .tos-items {
+    font-size: 10.5px;
+  }
+</style>
