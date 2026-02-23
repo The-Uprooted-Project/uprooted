@@ -1,0 +1,24 @@
+# Maintainer: watchthelight <admin@watchthelight.org>
+_pkgname=uprooted
+pkgname=${_pkgname}-bin
+pkgver=%%VERSION%%
+pkgrel=1
+pkgdesc="A client mod framework for Root Communications"
+arch=('x86_64' 'aarch64')
+url="https://github.com/The-Uprooted-Project/uprooted"
+license=('LicenseRef-Uprooted-1.0')
+provides=("${_pkgname}")
+conflicts=("${_pkgname}" "${_pkgname}-git")
+options=('!strip' '!debug')
+source_x86_64=("${url}/releases/download/v${pkgver}/Uprooted-${pkgver}-linux-amd64")
+source_aarch64=("${url}/releases/download/v${pkgver}/Uprooted-${pkgver}-linux-arm64")
+sha256sums_x86_64=('%%SHA256_AMD64%%')
+sha256sums_aarch64=('%%SHA256_ARM64%%')
+
+package() {
+    if [[ "$CARCH" == "x86_64" ]]; then
+        install -Dm755 "${srcdir}/Uprooted-${pkgver}-linux-amd64" "${pkgdir}/usr/bin/uprooted"
+    else
+        install -Dm755 "${srcdir}/Uprooted-${pkgver}-linux-arm64" "${pkgdir}/usr/bin/uprooted"
+    fi
+}

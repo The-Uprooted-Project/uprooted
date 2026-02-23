@@ -1,0 +1,45 @@
+﻿# Maintainer: watchthelight
+pkgname=uprooted
+pkgver=0.5.0
+pkgrel=1
+pkgdesc="Client mod framework for Root Communications"
+arch=('x86_64')
+url="https://github.com/The-Uprooted-Project/uprooted"
+license=('LicenseRef-Uprooted-1.0')
+depends=('dotnet-runtime-10.0')
+makedepends=('gcc' 'dotnet-sdk-10.0' 'nodejs' 'pnpm' 'rust')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/The-Uprooted-Project/uprooted/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname-$pkgver"
+
+    # Build TypeScript layer
+    pnpm install --frozen-lockfile
+    pnpm build
+
+    # Build Hook DLL
+    dotnet build hook/UprootedHook.csproj -c Release
+
+    # Build profiler shared library
+    gcc -shared -fPIC -O2 -o libuprooted_profiler.so tools/uprooted_profiler_linux.c
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+
+    # Install profiler
+    install -Dm755 libuprooted_profiler.so "$pkgdir/usr/lib/uprooted/libuprooted_profiler.so"
+
+    # Install hook DLL and deps
+    install -Dm644 hook/bin/Release/net10.0/UprootedHook.dll "$pkgdir/usr/lib/uprooted/UprootedHook.dll"
+    install -Dm644 hook/bin/Release/net10.0/UprootedHook.deps.json "$pkgdir/usr/lib/uprooted/UprootedHook.deps.json"
+
+    # Install JS + CSS
+    install -Dm644 dist/uprooted-preload.js "$pkgdir/usr/lib/uprooted/uprooted-preload.js"
+    install -Dm644 dist/uprooted.css "$pkgdir/usr/lib/uprooted/uprooted.css"
+
+    # Install standalone scripts
+    install -Dm755 install-uprooted-linux.sh "$pkgdir/usr/bin/uprooted-install"
+    install -Dm755 uninstall-uprooted-linux.sh "$pkgdir/usr/bin/uprooted-uninstall"
+}
