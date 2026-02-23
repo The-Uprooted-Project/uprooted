@@ -37,7 +37,7 @@ these rules exist to protect the project and its users. if you want to share upr
 
 ## policy
 
-**uprooted is not affiliated with root communications.** this is an independent community project. all modifications are cosmetic-only and do not interact with root's backend services.
+**uprooted is not affiliated with root communications.** this is an independent community project.
 
 ## links
 
