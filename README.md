@@ -26,6 +26,17 @@
 
 these rules exist to protect the project and its users. if you want to share uprooted with someone, send them a link to this repository.
 
+## policy
+
+**uprooted is not affiliated with root communications.** this is an independent community project. all modifications are cosmetic-only and do not interact with root's backend services.
+
+## links
+
+- [uprooted.sh](https://uprooted.sh)
+- [download latest release](https://github.com/The-Uprooted-Project/uprooted/releases/latest)
+- [uprooted server](https://rootapp.gg/AC0ILwUxgQqJ2MOSMXdGjw)
+- admin@watchthelight.org
+
 ## license
 
-[uprooted license v1.0](LICENSE)
+[uprooted license v1.0](LICENSE) — use pieces with credit, don't redistribute the whole thing
