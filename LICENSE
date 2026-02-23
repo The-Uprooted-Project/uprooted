@@ -1,0 +1,40 @@
+Uprooted License v1.0
+
+Copyright (c) 2025-2026 watchthelight
+
+Permission is granted to any person obtaining a copy of this software
+and associated documentation files (the "Software") to use, study, and
+modify the Software, subject to the following conditions:
+
+1. ATTRIBUTION REQUIRED. Any use of the Software, in whole or in part,
+   in another project or product must include clear and visible credit
+   to the original author(s) and a link to the original repository:
+   https://github.com/watchthelight/uprooted
+
+2. PARTIAL USE PERMITTED. Individual files, functions, or components
+   may be extracted and used in other projects, provided that:
+   (a) attribution is given as described in Section 1, and
+   (b) the extracted portions are not used to create a competing or
+       substantially similar product to the Software as a whole.
+
+3. WHOLE-PROJECT REDISTRIBUTION PROHIBITED. The Software as a whole,
+   or any substantial portion that reproduces the overall functionality
+   of the Software, may not be redistributed, republished, or repackaged
+   without explicit written permission from the copyright holder.
+   This includes forks that replicate the Software's core functionality.
+
+4. NO REMOVAL OF NOTICES. Copyright notices, license files, and
+   attribution notices must not be removed or altered in any copy or
+   substantial portion of the Software.
+
+5. NO WARRANTY. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+   WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+6. TERMINATION. Any violation of these terms automatically terminates
+   the rights granted under this license.
