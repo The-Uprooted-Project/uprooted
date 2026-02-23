@@ -15,3 +15,12 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+
+# Linguist overrides — ensure all code is counted
+dist/* linguist-vendored=false
+dist/*.js linguist-language=JavaScript
+site/dist/* linguist-vendored=false
+Cargo.lock linguist-generated=false
+pnpm-lock.yaml linguist-generated=true
+tests/Dockerfile.unittest linguist-detectable=true
+tests/Dockerfile.unittest linguist-language=Dockerfile
