@@ -1,18 +1,18 @@
-﻿#!/bin/bash
-# Uprooted Linux Installer v0.4.2
+#!/bin/bash
+# Uprooted Linux Installer
 # Standalone bash installer for systems without the GUI installer.
 #
 # Usage: ./install-uprooted-linux.sh [--root-path /path/to/Root.AppImage]
-#        ./install-uprooted-linux.sh --prebuilt [--root-path /path/to/Root.AppImage]
-#        ./install-uprooted-linux.sh --auto-deps  (auto-install missing build deps)
+#        ./install-uprooted-linux.sh --channel canary
+#        ./install-uprooted-linux.sh --local        (deploy from repo build output, skip download)
 #        ./install-uprooted-linux.sh --uninstall
-#        ./install-uprooted-linux.sh --repair [--prebuilt]
+#        ./install-uprooted-linux.sh --repair
 #        ./install-uprooted-linux.sh --diagnose
-#        ./install-uprooted-linux.sh --desktop   (also create a .desktop file)
+#        ./install-uprooted-linux.sh --desktop      (also create a .desktop file)
 #
 # This script:
 # 1. Finds Root.AppImage (or uses --root-path)
-# 2. Builds (or downloads) profiler + hook artifacts
+# 2. Downloads (or copies local) profiler + hook artifacts
 # 3. Deploys to ~/.local/share/uprooted/
 # 4. Creates a wrapper script with CLR profiler env vars
 # 5. Patches HTML files in Root's profile directory
@@ -20,11 +20,21 @@
 
 set -euo pipefail
 
+# When launched by double-clicking in a file manager, the terminal auto-closes
+# on exit. Trap errors so the user can read what went wrong before it vanishes.
+trap 'echo ""; error "Script failed (line $LINENO). See error above."; echo ""; read -rp "Press Enter to exit..." || true' ERR
+
 INSTALL_DIR="$HOME/.local/share/uprooted"
 PROFILE_DIR="$HOME/.local/share/Root Communications/Root/profile/default"
 PROFILER_GUID="{D1A6F5A0-1234-4567-89AB-CDEF01234567}"
-VERSION="0.5.1-dev2"
-AUTO_DEPS=false
+VERSION="0.5.1"
+
+# Default channel: pre-release versions (dev/alpha/beta/rc) use canary channel
+if [[ "$VERSION" == *-dev* || "$VERSION" == *-alpha* || "$VERSION" == *-beta* || "$VERSION" == *-rc* ]]; then
+    CHANNEL="canary"
+else
+    CHANNEL="stable"
+fi
 ROOT_EXEC=""        # actual binary/AppRun to exec (may differ from ROOT_PATH)
 SQUASHFS_ROOT=""    # set when using an extracted AppImage
 
@@ -40,6 +50,17 @@ warn()  { echo -e "${YELLOW}[!]${NC} $1"; }
 error() { echo -e "${RED}[-]${NC} $1"; }
 die()   { error "$1"; exit 1; }
 
+# ── Channel → GitHub repo mapping ──
+
+channel_repo() {
+    case "$CHANNEL" in
+        stable) echo "The-Uprooted-Project/uprooted" ;;
+        canary) echo "The-Uprooted-Project/uprooted-canary" ;;
+        dev)    echo "The-Uprooted-Project/uprooted-private" ;;
+        *)      die "Unknown channel: $CHANNEL (use stable, canary, or dev)" ;;
+    esac
+}
+
 # ── Resolve latest release version from GitHub API ──
 
 resolve_latest_version() {
@@ -48,24 +69,43 @@ resolve_latest_version() {
         return
     fi
 
-    local api_url="https://api.github.com/repos/The-Uprooted-Project/uprooted/releases/latest"
+    local repo
+    repo=$(channel_repo)
+
+    # /releases/latest only returns non-prerelease; canary/dev are always prerelease
+    local api_url
+    if [[ "$CHANNEL" == "stable" ]]; then
+        api_url="https://api.github.com/repos/${repo}/releases/latest"
+    else
+        api_url="https://api.github.com/repos/${repo}/releases?per_page=1"
+    fi
+
+    local curl_opts=(-sL --max-time 10)
+    if [[ "$CHANNEL" == "dev" && -n "${GITHUB_TOKEN:-}" ]]; then
+        curl_opts+=(-H "Authorization: Bearer $GITHUB_TOKEN")
+    fi
+
     local response
-    response=$(curl -sL --max-time 10 "$api_url" 2>/dev/null) || {
+    response=$(curl "${curl_opts[@]}" "$api_url" 2>/dev/null) || {
         warn "Could not reach GitHub API, using bundled version v$VERSION"
         return
     }
 
     local tag
-    tag=$(echo "$response" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"v[^"]*"' | tr -d '"')
+    tag=$(echo "$response" | grep -o '"tag_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | grep -o '"v[^"]*"' | tr -d '"')
 
     if [[ -z "$tag" ]]; then
-        warn "Could not parse latest version from GitHub API, using bundled v$VERSION"
+        if [[ "$CHANNEL" == "dev" ]]; then
+            warn "Could not fetch latest dev release (is GITHUB_TOKEN set?), using bundled v$VERSION"
+        else
+            warn "Could not parse latest version from GitHub API, using bundled v$VERSION"
+        fi
         return
     fi
 
     local latest="${tag#v}"
     if [[ "$latest" != "$VERSION" ]]; then
-        log "Latest release: v$latest (script bundled: v$VERSION)"
+        log "Latest $CHANNEL release: v$latest (script bundled: v$VERSION)"
         VERSION="$latest"
     fi
 }
@@ -234,7 +274,7 @@ run_diagnose() {
         warn "  profiler.log: not found (profiler has never loaded)"
     fi
 
-    local hook_log="$INSTALL_DIR/uprooted-hook.log"
+    local hook_log="$PROFILE_DIR/uprooted-hook.log"
     if [[ -f "$hook_log" ]]; then
         log "  uprooted-hook.log exists ($(wc -l < "$hook_log") lines)"
         log "  Last 10 lines:"
@@ -410,11 +450,19 @@ run_uninstall() {
 
 ROOT_PATH=""
 MODE="install"
-USE_PREBUILT=false
+USE_LOCAL=false
 CREATE_DESKTOP=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --root-path) ROOT_PATH="$2"; shift 2 ;;
+        --channel)
+            CHANNEL="$2"
+            case "$CHANNEL" in
+                stable|canary|dev) ;;
+                *) die "Unknown channel: $CHANNEL (use stable, canary, or dev)" ;;
+            esac
+            shift 2
+            ;;
         --diagnose)
             MODE="diagnose"
             shift
@@ -427,12 +475,8 @@ while [[ $# -gt 0 ]]; do
             MODE="repair"
             shift
             ;;
-        --prebuilt)
-            USE_PREBUILT=true
-            shift
-            ;;
-        --auto-deps)
-            AUTO_DEPS=true
+        --local)
+            USE_LOCAL=true
             shift
             ;;
         --desktop)
@@ -440,17 +484,19 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            echo "Usage: $0 [--root-path /path/to/Root.AppImage] [--prebuilt] [--desktop]"
+            echo "Usage: $0 [--root-path /path/to/Root.AppImage] [--desktop]"
+            echo "       $0 --channel canary"
+            echo "       $0 --local"
             echo "       $0 --uninstall"
-            echo "       $0 --repair [--prebuilt]"
+            echo "       $0 --repair"
             echo "       $0 --diagnose"
             echo ""
             echo "Installs Uprooted client mod framework for Root Communications."
             echo ""
             echo "Options:"
             echo "  --root-path    Path to Root.AppImage (auto-detected if not given)"
-            echo "  --prebuilt     Download pre-built artifacts instead of building from source"
-            echo "  --auto-deps    Auto-install missing build dependencies without prompting"
+            echo "  --local        Deploy from repo build output (skip download — for dev use)"
+            echo "  --channel CH   Release channel: stable (default), canary, dev (requires GITHUB_TOKEN)"
             echo "  --desktop      Create a .desktop file for launching Root with Uprooted"
             echo "  --uninstall    Remove Uprooted completely (patches, env vars, files)"
             echo "  --repair       Re-deploy artifacts and re-patch HTML files"
@@ -477,8 +523,13 @@ find_root() {
     # 1. Exact well-known paths (fastest check)
     local candidates=(
         "$HOME/Applications/Root.AppImage"
+        "$HOME/Applications/root.appimage"
+        "$HOME/AppImages/Root.AppImage"
+        "$HOME/AppImages/root.appimage"
         "$HOME/Downloads/Root.AppImage"
+        "$HOME/Downloads/root.appimage"
         "$HOME/.local/bin/Root.AppImage"
+        "$HOME/.local/bin/root.appimage"
         "/opt/Root.AppImage"
         "/usr/bin/Root.AppImage"
         "$HOME/.local/bin/Root"
@@ -495,6 +546,7 @@ find_root() {
     # 2. Glob for variant filenames (versioned, renamed, etc.) in common directories
     local search_dirs=(
         "$HOME/Applications"
+        "$HOME/AppImages"
         "$HOME/Downloads"
         "$HOME/.local/bin"
         "$HOME/Desktop"
@@ -505,7 +557,7 @@ find_root() {
     )
     for dir in "${search_dirs[@]}"; do
         [[ -d "$dir" ]] || continue
-        for f in "$dir"/Root*.AppImage "$dir"/root*.AppImage "$dir"/Root*.appimage; do
+        for f in "$dir"/Root*.AppImage "$dir"/root*.AppImage "$dir"/Root*.appimage "$dir"/root*.appimage; do
             if [[ -f "$f" ]]; then
                 ROOT_PATH="$f"
                 log "Found Root at: $ROOT_PATH"
@@ -541,12 +593,14 @@ find_root() {
         done
     done
 
-    # 4. Check running Root processes via /proc
+    # 4. Check running Root processes via /proc (skip FUSE mounts)
     for pid_dir in /proc/[0-9]*/; do
         local exe
         exe=$(readlink "${pid_dir}exe" 2>/dev/null) || continue
+        # Skip ephemeral FUSE mounts from running AppImages
+        [[ "$exe" == /tmp/.mount_* ]] && continue
         case "$exe" in
-            *Root*.AppImage|*Root*.appimage|*/Root)
+            *Root*.AppImage|*root*.appimage|*/Root)
                 if [[ -f "$exe" ]]; then
                     ROOT_PATH="$exe"
                     log "Found Root via running process: $ROOT_PATH"
@@ -662,202 +716,23 @@ resolve_root_exec() {
     ROOT_EXEC="$ROOT_PATH"
 }
 
-# ── Dependency management (build from source) ──
-
-detect_pkg_manager() {
-    if command -v apt-get &>/dev/null; then echo "apt"
-    elif command -v dnf &>/dev/null; then echo "dnf"
-    elif command -v pacman &>/dev/null; then echo "pacman"
-    elif command -v zypper &>/dev/null; then echo "zypper"
-    else echo "unknown"
-    fi
-}
-
-# Install .NET 10 SDK via Microsoft's official install script (no apt feed config needed)
-install_dotnet() {
-    log "Installing .NET 10 SDK via Microsoft's dotnet-install.sh..."
-    local tmp_script
-    tmp_script=$(mktemp --suffix=.sh)
-
-    if command -v curl &>/dev/null; then
-        curl -sSL "https://dot.net/v1/dotnet-install.sh" -o "$tmp_script" || {
-            error "Failed to download dotnet-install.sh"
-            return 1
-        }
-    elif command -v wget &>/dev/null; then
-        wget -qO "$tmp_script" "https://dot.net/v1/dotnet-install.sh" || {
-            error "Failed to download dotnet-install.sh"
-            return 1
-        }
-    else
-        error "curl or wget is required to install .NET automatically."
-        return 1
-    fi
-
-    chmod +x "$tmp_script"
-    if ! bash "$tmp_script" --channel 10.0 --install-dir "$HOME/.dotnet"; then
-        rm -f "$tmp_script"
-        error ".NET install script failed."
-        return 1
-    fi
-    rm -f "$tmp_script"
-
-    export DOTNET_ROOT="$HOME/.dotnet"
-    export PATH="$HOME/.dotnet:$PATH"
-    log ".NET 10 SDK installed to ~/.dotnet"
-    warn "Add to your shell profile to make permanent:"
-    warn "  export DOTNET_ROOT=\$HOME/.dotnet"
-    warn "  export PATH=\$HOME/.dotnet:\$PATH"
-}
-
-install_sys_pkgs() {
-    local pkg_mgr="$1"
-    shift
-    local pkgs=("$@")
-    case "$pkg_mgr" in
-        apt)     sudo apt-get install -y "${pkgs[@]}" ;;
-        dnf)     sudo dnf install -y "${pkgs[@]}" ;;
-        pacman)  sudo pacman -S --noconfirm "${pkgs[@]}" ;;
-        zypper)  sudo zypper install -y "${pkgs[@]}" ;;
-        *)
-            error "Unknown package manager. Install manually: ${pkgs[*]}"
-            return 1
-            ;;
-    esac
-}
-
-# Maps abstract dep names to distro-specific package names
-pkg_name_for() {
-    local dep="$1"
-    local mgr="$2"
-    case "$dep:$mgr" in
-        gcc:*)     echo "gcc" ;;
-        nodejs:apt) echo "nodejs" ;;
-        nodejs:dnf) echo "nodejs" ;;
-        nodejs:pacman) echo "nodejs" ;;
-        nodejs:zypper) echo "nodejs" ;;
-        # npm is separate from nodejs on Ubuntu/Debian (and sometimes dnf)
-        npm:apt)   echo "npm" ;;
-        npm:dnf)   echo "npm" ;;
-        npm:pacman) echo "npm" ;;  # pacman nodejs usually includes npm
-        npm:zypper) echo "npm" ;;
-        *)         echo "$dep" ;;
-    esac
-}
-
-# ── Check prerequisites (build from source) ──
-
-check_prereqs() {
-    local need_gcc=false need_dotnet=false need_node=false need_npm=false need_pnpm=false
-
-    command -v gcc    &>/dev/null || need_gcc=true
-    command -v dotnet &>/dev/null || need_dotnet=true
-    command -v node   &>/dev/null || need_node=true
-    # npm is often a separate package from nodejs — check it explicitly
-    command -v npm    &>/dev/null || need_npm=true
-    command -v pnpm   &>/dev/null || need_pnpm=true
-
-    # All present — nothing to do
-    if ! $need_gcc && ! $need_dotnet && ! $need_node && ! $need_npm && ! $need_pnpm; then
-        return 0
-    fi
-
-    echo ""
-    warn "Missing build dependencies:"
-    $need_gcc    && warn "  - gcc    (compiles the CLR profiler shared library)"
-    $need_dotnet && warn "  - dotnet (builds the C# hook — Root itself is a .NET 10 app)"
-    $need_node   && warn "  - nodejs (bundles the TypeScript plugin layer)"
-    $need_npm    && warn "  - npm    (needed to install pnpm — often separate from nodejs)"
-    $need_pnpm   && warn "  - pnpm   (TypeScript package manager)"
-    echo ""
-
-    local choice="1"
-    if [[ "$AUTO_DEPS" != "true" ]]; then
-        echo "  What do you want to do?"
-        echo "    [1] Auto-install missing dependencies (may require sudo)"
-        echo "    [2] Use pre-built artifacts instead  (RECOMMENDED — no build tools needed)"
-        echo "    [3] Exit and install manually"
-        echo ""
-        printf "  Choice [1/2/3]: "
-        read -r choice
-    fi
-
-    case "$choice" in
-        2)
-            log "Using pre-built artifacts."
-            USE_PREBUILT=true
-            return 0
-            ;;
-        3|q|Q|"")
-            echo ""
-            echo "  Install manually, then re-run — or use: $0 --prebuilt"
-            exit 1
-            ;;
-    esac
-
-    # --- Auto-install ---
-    local pkg_mgr
-    pkg_mgr=$(detect_pkg_manager)
-    log "Detected package manager: ${pkg_mgr:-none}"
-
-    # Install gcc + nodejs + npm via system package manager
-    local sys_pkgs=()
-    if $need_gcc;  then sys_pkgs+=("$(pkg_name_for gcc "$pkg_mgr")"); fi
-    if $need_node; then sys_pkgs+=("$(pkg_name_for nodejs "$pkg_mgr")"); fi
-    if $need_npm;  then sys_pkgs+=("$(pkg_name_for npm "$pkg_mgr")"); fi
-
-    if [[ ${#sys_pkgs[@]} -gt 0 ]]; then
-        log "Installing: ${sys_pkgs[*]}..."
-        if ! install_sys_pkgs "$pkg_mgr" "${sys_pkgs[@]}"; then
-            warn "System package install failed. Falling back to pre-built artifacts."
-            USE_PREBUILT=true
-            return 0
-        fi
-    fi
-
-    # Install .NET 10 via Microsoft's install script
-    if $need_dotnet; then
-        if ! install_dotnet; then
-            warn ".NET install failed. Falling back to pre-built artifacts."
-            USE_PREBUILT=true
-            return 0
-        fi
-    fi
-
-    # Install pnpm via npm into ~/.local (no sudo needed)
-    if $need_pnpm && command -v npm &>/dev/null; then
-        log "Installing pnpm to ~/.local (no sudo required)..."
-        npm install -g pnpm --prefix "$HOME/.local" 2>&1 || {
-            warn "pnpm install failed. Falling back to pre-built artifacts."
-            USE_PREBUILT=true
-            return 0
-        }
-        # Make sure ~/.local/bin is in PATH for the rest of this script
-        export PATH="$HOME/.local/bin:$PATH"
-    fi
-
-    # Final check — if anything is still missing, fall back
-    local still_missing=()
-    command -v gcc    &>/dev/null || still_missing+=("gcc")
-    command -v dotnet &>/dev/null || still_missing+=("dotnet")
-    command -v node   &>/dev/null || still_missing+=("node")
-    command -v pnpm   &>/dev/null || still_missing+=("pnpm")
-
-    if [[ ${#still_missing[@]} -gt 0 ]]; then
-        warn "Still missing after install attempt: ${still_missing[*]}"
-        warn "Falling back to pre-built artifacts."
-        USE_PREBUILT=true
-    fi
-}
-
 # ── Download pre-built artifacts ──
 
 download_prebuilt() {
     resolve_latest_version
 
-    local artifacts_url="https://github.com/The-Uprooted-Project/uprooted/releases/download/v${VERSION}/uprooted-linux-artifacts.tar.gz"
+    local repo
+    repo=$(channel_repo)
+    local artifacts_url="https://github.com/${repo}/releases/download/v${VERSION}/uprooted-linux-artifacts.tar.gz"
 
-    log "Downloading pre-built artifacts (v$VERSION)..."
+    log "Downloading pre-built artifacts (v$VERSION, $CHANNEL channel)..."
+
+    if [[ "$CHANNEL" == "dev" && -z "${GITHUB_TOKEN:-}" ]]; then
+        error "The dev channel requires a GitHub token for the private repo."
+        error "  Set GITHUB_TOKEN in your environment, e.g.:"
+        error "    GITHUB_TOKEN=ghp_xxxx ./install-uprooted-linux.sh --channel dev"
+        die "  Create a token at: https://github.com/settings/tokens"
+    fi
 
     if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
         die "Neither curl nor wget found. Install one and try again."
@@ -868,13 +743,18 @@ download_prebuilt() {
     local tarball="$tmpdir/uprooted-linux-artifacts.tar.gz"
 
     if command -v curl &>/dev/null; then
+        local curl_opts=(-sL -w "%{http_code}" -o "$tarball" --max-time 120)
+        if [[ "$CHANNEL" == "dev" && -n "${GITHUB_TOKEN:-}" ]]; then
+            curl_opts+=(-H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/octet-stream")
+        fi
+
         local http_code
-        http_code=$(curl -sL -w "%{http_code}" -o "$tarball" --max-time 120 "$artifacts_url" 2>/dev/null) || http_code="000"
+        http_code=$(curl "${curl_opts[@]}" "$artifacts_url" 2>/dev/null) || http_code="000"
 
         if [[ "$http_code" == "404" ]]; then
             rm -rf "$tmpdir"
-            error "Version v$VERSION not found on GitHub (HTTP 404)."
-            error "  Check available releases: https://github.com/The-Uprooted-Project/uprooted/releases"
+            error "Version v$VERSION not found on $CHANNEL channel (HTTP 404)."
+            error "  Check available releases: https://github.com/${repo}/releases"
             die "  Run with --diagnose for more info."
         elif [[ "$http_code" != "200" && "$http_code" != "000" ]]; then
             rm -rf "$tmpdir"
@@ -887,7 +767,12 @@ download_prebuilt() {
             die "  Check your internet connection and try again."
         fi
     else
-        if ! wget -q -O "$tarball" "$artifacts_url" 2>/dev/null; then
+        local wget_opts=(-q -O "$tarball")
+        if [[ "$CHANNEL" == "dev" && -n "${GITHUB_TOKEN:-}" ]]; then
+            wget_opts+=(--header="Authorization: Bearer $GITHUB_TOKEN" --header="Accept: application/octet-stream")
+        fi
+
+        if ! wget "${wget_opts[@]}" "$artifacts_url" 2>/dev/null; then
             rm -rf "$tmpdir"
             error "Failed to download pre-built artifacts."
             error "  URL: $artifacts_url"
@@ -929,68 +814,60 @@ download_prebuilt() {
     log "Pre-built artifacts deployed to $INSTALL_DIR"
 }
 
-# ── Build artifacts from source ──
+# ── Deploy local artifacts (skip building) ──
 
-build_artifacts() {
+deploy_local() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    log "Building artifacts from source..."
+    log "Deploying from local build output..."
 
-    # Build TypeScript layer
-    log "Building TypeScript layer..."
-    if ! (cd "$script_dir" && pnpm install --frozen-lockfile && pnpm build); then
-        error "TypeScript build failed."
-        return 1
+    # Look for artifacts in repo build output
+    local hook_out="$script_dir/hook/bin/Release/net10.0"
+    local hook_out9="$script_dir/hook/bin/Release/net9.0"
+    local profiler="$script_dir/libuprooted_profiler.so"
+
+    # Validate required artifacts exist
+    local missing=false
+    for f in "$hook_out/UprootedHook.dll" "$hook_out/UprootedHook.deps.json" \
+             "$script_dir/dist/uprooted-preload.js" "$script_dir/dist/uprooted.css" \
+             "$profiler"; do
+        if [[ ! -f "$f" ]]; then
+            error "Missing: $f"
+            missing=true
+        fi
+    done
+    if [[ "$missing" == true ]]; then
+        die "Build artifacts not found. Run 'dotnet build hook/UprootedHook.csproj -c Release' and build the profiler first."
     fi
 
-    # Build Hook DLL
-    log "Building UprootedHook.dll..."
-    if ! dotnet build "$script_dir/hook/UprootedHook.csproj" -c Release; then
-        error "Hook DLL build failed."
-        return 1
-    fi
-
-    # Build profiler .so
-    log "Compiling libuprooted_profiler.so..."
-    if ! gcc -shared -fPIC -O2 -o "$script_dir/libuprooted_profiler.so" "$script_dir/tools/uprooted_profiler_linux.c"; then
-        error "Profiler build failed."
-        return 1
-    fi
-
-    # Deploy
     mkdir -p "$INSTALL_DIR"
 
-    cp "$script_dir/libuprooted_profiler.so" "$INSTALL_DIR/"
-    cp "$script_dir/hook/bin/Release/net9.0/UprootedHook.dll" "$INSTALL_DIR/"
-    cp "$script_dir/hook/bin/Release/net9.0/UprootedHook.deps.json" "$INSTALL_DIR/"
+    cp "$profiler" "$INSTALL_DIR/"
+    cp "$hook_out/UprootedHook.dll" "$INSTALL_DIR/"
+    cp "$hook_out/UprootedHook.deps.json" "$INSTALL_DIR/"
+    cp "$hook_out/nsfw-filter.js" "$INSTALL_DIR/" 2>/dev/null || true
+    cp "$hook_out/link-embeds.js" "$INSTALL_DIR/" 2>/dev/null || true
+    # net9.0 fallback
+    if [[ -f "$hook_out9/UprootedHook.dll" ]]; then
+        cp "$hook_out9/UprootedHook.dll" "$INSTALL_DIR/UprootedHook.net9.dll"
+        cp "$hook_out9/UprootedHook.deps.json" "$INSTALL_DIR/UprootedHook.net9.deps.json"
+    fi
     cp "$script_dir/dist/uprooted-preload.js" "$INSTALL_DIR/"
     cp "$script_dir/dist/uprooted.css" "$INSTALL_DIR/"
 
     chmod +x "$INSTALL_DIR/libuprooted_profiler.so"
 
-    log "Artifacts deployed to $INSTALL_DIR"
+    log "Local artifacts deployed to $INSTALL_DIR"
 }
 
-# ── Deploy artifacts (prebuilt or from source) ──
+# ── Deploy artifacts (prebuilt or local) ──
 
 deploy_artifacts() {
-    if [[ "$USE_PREBUILT" == true ]]; then
-        download_prebuilt
+    if [[ "$USE_LOCAL" == true ]]; then
+        deploy_local
     else
-        # Auto-detect: if we're not inside the full repo, fall back to prebuilt
-        local script_dir
-        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        if [[ ! -f "$script_dir/package.json" ]] || [[ ! -d "$script_dir/hook" ]] || [[ ! -d "$script_dir/tools" ]]; then
-            log "Standalone script detected (no repo found). Using pre-built artifacts."
-            download_prebuilt
-        else
-            check_prereqs
-            if ! build_artifacts; then
-                warn "Build from source failed. Falling back to pre-built artifacts..."
-                download_prebuilt
-            fi
-        fi
+        download_prebuilt
     fi
 }
 
@@ -1002,69 +879,6 @@ is_kde() {
     || [[ "${KDE_FULL_SESSION:-}" == "true" ]]
 }
 
-# ── Set session-wide env vars (systemd environment.d) ──
-
-set_env_vars() {
-    local env_dir="$HOME/.config/environment.d"
-    mkdir -p "$env_dir"
-
-    cat > "$env_dir/uprooted.conf" << ENVCONF
-# Uprooted -- remove this file or run the uninstaller to disable
-# .NET 10+ (DOTNET_ prefix)
-DOTNET_EnableDiagnostics=1
-DOTNET_ENABLE_PROFILING=1
-DOTNET_PROFILER=$PROFILER_GUID
-DOTNET_PROFILER_PATH=$INSTALL_DIR/libuprooted_profiler.so
-DOTNET_ReadyToRun=0
-# Legacy (.NET 8/9)
-CORECLR_ENABLE_PROFILING=1
-CORECLR_PROFILER=$PROFILER_GUID
-CORECLR_PROFILER_PATH=$INSTALL_DIR/libuprooted_profiler.so
-ENVCONF
-    log "Session env vars written to $env_dir/uprooted.conf"
-
-    # KDE Plasma env script -- only written when running under KDE
-    if is_kde; then
-        local plasma_env_dir="$HOME/.config/plasma-workspace/env"
-        mkdir -p "$plasma_env_dir"
-        cat > "$plasma_env_dir/uprooted.sh" << PLASMAENV
-#!/bin/sh
-# Uprooted -- remove this file or run the uninstaller to disable
-export DOTNET_EnableDiagnostics=1
-export DOTNET_ENABLE_PROFILING=1
-export DOTNET_PROFILER='$PROFILER_GUID'
-export DOTNET_PROFILER_PATH='$INSTALL_DIR/libuprooted_profiler.so'
-export DOTNET_ReadyToRun=0
-export CORECLR_ENABLE_PROFILING=1
-export CORECLR_PROFILER='$PROFILER_GUID'
-export CORECLR_PROFILER_PATH='$INSTALL_DIR/libuprooted_profiler.so'
-PLASMAENV
-        chmod +x "$plasma_env_dir/uprooted.sh"
-        log "KDE Plasma env script written to $plasma_env_dir/uprooted.sh"
-    fi
-
-    # Also add to ~/.profile as fallback for non-systemd sessions (X11, login shells)
-    if ! grep -q "DOTNET_ENABLE_PROFILING" "$HOME/.profile" 2>/dev/null; then
-        cat >> "$HOME/.profile" << PROFILE
-
-# Uprooted (remove these lines to disable)
-export DOTNET_EnableDiagnostics=1
-export DOTNET_ENABLE_PROFILING=1
-export DOTNET_PROFILER='$PROFILER_GUID'
-export DOTNET_PROFILER_PATH='$INSTALL_DIR/libuprooted_profiler.so'
-export DOTNET_ReadyToRun=0
-export CORECLR_ENABLE_PROFILING=1
-export CORECLR_PROFILER='$PROFILER_GUID'
-export CORECLR_PROFILER_PATH='$INSTALL_DIR/libuprooted_profiler.so'
-PROFILE
-        log "Env vars appended to ~/.profile (login shell fallback)"
-    else
-        log "~/.profile already contains Uprooted env vars"
-    fi
-
-    warn "Log out and back in (or reboot) for env vars to take effect globally."
-    warn "Or use the wrapper script below for immediate use."
-}
 
 # ── Create wrapper script ──
 
@@ -1258,7 +1072,6 @@ run_repair() {
     deploy_artifacts
 
     # Re-set env vars
-    set_env_vars
     create_wrapper
 
     if [[ "$CREATE_DESKTOP" == true ]]; then
@@ -1272,19 +1085,22 @@ run_repair() {
     log "Re-applying HTML patches..."
     patch_html
 
+    # Kill running Root and relaunch with Uprooted
+    if pgrep -f "Root" &>/dev/null; then
+        log "Stopping running Root process..."
+        pkill -f "Root" 2>/dev/null || true
+        sleep 1
+        pkill -9 -f "Root" 2>/dev/null || true
+        sleep 0.5
+    fi
+
+    log "Launching Root with Uprooted..."
+    nohup "$INSTALL_DIR/launch-root.sh" &>/dev/null &
+    disown
+
     echo ""
-    echo -e "  ${YELLOW}┌──────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "  ${YELLOW}│${NC}"
-    echo -e "  ${YELLOW}│${NC}  ${GREEN}Repair complete!${NC}"
-    echo -e "  ${YELLOW}│${NC}"
-    echo -e "  ${YELLOW}│${NC}  You ${BOLD}MUST${NC} log out and log back in for changes to take effect."
-    echo -e "  ${YELLOW}│${NC}"
-    echo -e "  ${YELLOW}│${NC}  Or launch immediately:"
-    echo -e "  ${YELLOW}│${NC}    ${GREEN}$INSTALL_DIR/launch-root.sh${NC}"
-    echo -e "  ${YELLOW}│${NC}"
-    echo -e "  ${YELLOW}│${NC}  Trouble? Run: ${GREEN}$0 --diagnose${NC}"
-    echo -e "  ${YELLOW}│${NC}"
-    echo -e "  ${YELLOW}└──────────────────────────────────────────────────────────────┘${NC}"
+    log "Repair complete! Root is launching."
+    log "Trouble? Run: $0 --diagnose"
     echo ""
 }
 
@@ -1292,16 +1108,19 @@ run_repair() {
 
 if [[ "$MODE" == "diagnose" ]]; then
     run_diagnose
+    read -rp "Press Enter to exit..." || true
     exit 0
 fi
 
 if [[ "$MODE" == "uninstall" ]]; then
     run_uninstall
+    read -rp "Press Enter to exit..." || true
     exit 0
 fi
 
 if [[ "$MODE" == "repair" ]]; then
     run_repair
+    read -rp "Press Enter to exit..." || true
     exit 0
 fi
 
@@ -1313,7 +1132,6 @@ echo ""
 find_root
 resolve_root_exec
 deploy_artifacts
-set_env_vars
 create_wrapper
 
 if [[ "$CREATE_DESKTOP" == true ]]; then
@@ -1322,17 +1140,22 @@ fi
 
 patch_html
 
+# Kill running Root and relaunch with Uprooted
+if pgrep -f "Root" &>/dev/null; then
+    log "Stopping running Root process..."
+    pkill -f "Root" 2>/dev/null || true
+    sleep 1
+    # Force kill if still alive
+    pkill -9 -f "Root" 2>/dev/null || true
+    sleep 0.5
+fi
+
+log "Launching Root with Uprooted..."
+nohup "$INSTALL_DIR/launch-root.sh" &>/dev/null &
+disown
+
 echo ""
-echo -e "  ${YELLOW}┌──────────────────────────────────────────────────────────────┐${NC}"
-echo -e "  ${YELLOW}│${NC}"
-echo -e "  ${YELLOW}│${NC}  ${GREEN}Installation complete!${NC}"
-echo -e "  ${YELLOW}│${NC}"
-echo -e "  ${YELLOW}│${NC}  You ${BOLD}MUST${NC} log out and log back in for Uprooted to activate."
-echo -e "  ${YELLOW}│${NC}"
-echo -e "  ${YELLOW}│${NC}  Or launch immediately:"
-echo -e "  ${YELLOW}│${NC}    ${GREEN}$INSTALL_DIR/launch-root.sh${NC}"
-echo -e "  ${YELLOW}│${NC}"
-echo -e "  ${YELLOW}│${NC}  Trouble? Run: ${GREEN}$0 --diagnose${NC}"
-echo -e "  ${YELLOW}│${NC}"
-echo -e "  ${YELLOW}└──────────────────────────────────────────────────────────────┘${NC}"
+log "Installation complete! Root is launching."
+log "Trouble? Run: $0 --diagnose"
 echo ""
+read -rp "Press Enter to exit..." || true

@@ -1644,7 +1644,7 @@ var Uprooted = (() => {
   };
 
   // src/core/preload.ts
-  var VERSION = true ? "0.5.0" : "dev";
+  var VERSION = true ? "0.5.1-rc" : "dev";
   function main() {
     try {
       const settings = window.__UPROOTED_SETTINGS__;

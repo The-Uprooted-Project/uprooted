@@ -572,7 +572,7 @@ This table tracks which Uprooted versions have been tested against which Root Co
 
 ### Compatibility Notes
 
-- **Root updates may break HTML patches.** Root's auto-updater can overwrite the HTML files that Uprooted patches. The C# hook's `HtmlPatchVerifier` (see [Hook Reference](../framework/HOOK_REFERENCE.md)) automatically detects and re-applies patches using a `FileSystemWatcher`.
+- **Root updates may break HTML patches.** Root's auto-updater can overwrite the HTML files that Uprooted patches. The hook automatically detects and re-applies patches.
 - **Bridge method signatures are stable.** Root's bridge interfaces (`INativeToWebRtc`, `IWebRtcToNative`) have remained stable across all tested versions. New methods may be added, but existing method signatures have not changed.
 - **CSS variable names are stable.** The 25 `--color-*` / `--rootsdk-*` variable pairs have been consistent across all tested Root versions. New variables may be added in future versions.
 - **Sub-app iframe structure may change.** The number and type of embedded sub-apps can change between Root versions. Do not rely on specific iframes being present.

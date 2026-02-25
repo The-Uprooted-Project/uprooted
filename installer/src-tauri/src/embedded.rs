@@ -13,6 +13,8 @@ pub const PROFILER: &[u8] = include_bytes!("../artifacts/libuprooted_profiler.dy
 
 pub const HOOK_DLL: &[u8] = include_bytes!("../artifacts/UprootedHook.dll");
 pub const HOOK_DEPS_JSON: &[u8] = include_bytes!("../artifacts/UprootedHook.deps.json");
+pub const HOOK_DLL_NET9: &[u8] = include_bytes!("../artifacts/UprootedHook.net9.dll");
+pub const HOOK_DEPS_JSON_NET9: &[u8] = include_bytes!("../artifacts/UprootedHook.net9.deps.json");
 pub const PRELOAD_JS: &[u8] = include_bytes!("../artifacts/uprooted-preload.js");
 pub const THEME_CSS: &[u8] = include_bytes!("../artifacts/uprooted.css");
 pub const NSFW_FILTER_JS: &[u8] = include_bytes!("../artifacts/nsfw-filter.js");

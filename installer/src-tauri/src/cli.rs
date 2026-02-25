@@ -75,17 +75,16 @@ pub fn run_install_plain() {
         }
     }
 
-    // Patch HTML
+    // Patch HTML (non-fatal: HTML files only exist after Root has been launched once)
     let result = patcher::install();
     if result.success {
         ok(&result.message);
     } else {
-        fail(&format!("HTML patching failed: {}", result.message));
-        return;
+        warn(&format!("{} Launch Root once, then re-run installer or --repair.", result.message));
     }
 
     println!();
-    println!("  {GREEN}{BOLD}\u{2713} Patch active{RESET} — restart Root to load Uprooted.");
+    println!("  {GREEN}{BOLD}\u{2713} Installed{RESET} — restart Root to load Uprooted.");
     println!();
 }
 
@@ -185,8 +184,7 @@ pub fn run_repair_plain() {
     if result.success {
         ok(&result.message);
     } else {
-        fail(&format!("HTML repair failed: {}", result.message));
-        return;
+        warn(&format!("{} Launch Root once, then re-run --repair.", result.message));
     }
 
     println!();

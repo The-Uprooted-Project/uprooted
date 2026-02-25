@@ -89,6 +89,7 @@ mod tui {
         Pending,
         Running,
         Done,
+        Warn(String),
         Failed(String),
     }
 
@@ -167,6 +168,10 @@ mod tui {
                     "  ✓".to_string(),
                     Style::default().fg(Color::Green),
                 ),
+                StepStatus::Warn(_) => (
+                    "  !".to_string(),
+                    Style::default().fg(Color::Yellow),
+                ),
                 StepStatus::Failed(_) => (
                     "  ✗".to_string(),
                     Style::default().fg(Color::Red),
@@ -178,7 +183,13 @@ mod tui {
                 Span::styled(step.label.clone(), style),
             ]));
 
-            // Show error detail on failure
+            // Show detail on warning or failure
+            if let StepStatus::Warn(msg) = &step.status {
+                lines.push(Line::from(Span::styled(
+                    format!("      {}", msg),
+                    Style::default().fg(Color::Yellow),
+                )));
+            }
             if let StepStatus::Failed(msg) = &step.status {
                 lines.push(Line::from(Span::styled(
                     format!("      {}", msg),
@@ -340,15 +351,18 @@ mod tui {
             }
 
             // Step 4: Patch HTML
+            // Non-fatal: HTML files are created by Root on first launch. If the user
+            // hasn't run Root yet, the profile dir won't have HTML files.
+            // The hook self-heals HTML patches at runtime, so this is best-effort.
             state.steps[4].status = StepStatus::Running;
             let result = patcher::install();
             if result.success {
                 state.steps[4].status = StepStatus::Done;
             } else {
-                state.steps[4].status = StepStatus::Failed(result.message);
-                state.finished = true;
-                state.message = "Installation failed.".to_string();
-                return;
+                state.steps[4].status = StepStatus::Warn(format!(
+                    "{} Launch Root once, then re-run installer or --repair.",
+                    result.message
+                ));
             }
 
             // Step 5: Verify
@@ -357,16 +371,12 @@ mod tui {
             if final_check.hook_status.files_ok && final_check.is_installed {
                 state.steps[5].status = StepStatus::Done;
             } else {
-                state.steps[5].status = StepStatus::Failed("Verification found issues".to_string());
-                state.finished = true;
-                state.message = "Installed with warnings.".to_string();
-                state.success = true;
-                return;
+                state.steps[5].status = StepStatus::Warn("Verification found issues — hook files deployed, HTML patches pending.".to_string());
             }
 
             state.finished = true;
             state.success = true;
-            state.message = "Patch active — restart Root to load Uprooted.".to_string();
+            state.message = "Installed — restart Root to load Uprooted.".to_string();
         });
     }
 
@@ -516,16 +526,16 @@ mod tui {
                 }
             }
 
-            // Step 4: Repair HTML
+            // Step 4: Repair HTML (non-fatal, same reasoning as install)
             state.steps[4].status = StepStatus::Running;
             let result = patcher::repair();
             if result.success {
                 state.steps[4].status = StepStatus::Done;
             } else {
-                state.steps[4].status = StepStatus::Failed(result.message);
-                state.finished = true;
-                state.message = "Repair failed.".to_string();
-                return;
+                state.steps[4].status = StepStatus::Warn(format!(
+                    "{} Launch Root once, then re-run --repair.",
+                    result.message
+                ));
             }
 
             // Step 5: Verify
@@ -534,7 +544,7 @@ mod tui {
             if final_check.hook_status.files_ok && final_check.is_installed {
                 state.steps[5].status = StepStatus::Done;
             } else {
-                state.steps[5].status = StepStatus::Failed("Verification found issues".to_string());
+                state.steps[5].status = StepStatus::Warn("Verification found issues — hook files deployed, HTML patches pending.".to_string());
             }
 
             state.finished = true;

@@ -89,6 +89,8 @@ pub fn deploy_files() -> Result<(), String> {
         (PROFILER_FILENAME, embedded::PROFILER),
         ("UprootedHook.dll", embedded::HOOK_DLL),
         ("UprootedHook.deps.json", embedded::HOOK_DEPS_JSON),
+        ("UprootedHook.net9.dll", embedded::HOOK_DLL_NET9),
+        ("UprootedHook.net9.deps.json", embedded::HOOK_DEPS_JSON_NET9),
         ("uprooted-preload.js", embedded::PRELOAD_JS),
         ("uprooted.css", embedded::THEME_CSS),
         ("nsfw-filter.js", embedded::NSFW_FILTER_JS),

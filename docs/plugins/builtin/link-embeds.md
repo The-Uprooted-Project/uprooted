@@ -57,7 +57,7 @@ The card layout is a flex column: text body on top, video section below. The vid
 - Thumbnail from `img.youtube.com/vi/{id}/hqdefault.jpg`
 - Red play button overlay (SVG)
 - **Browser-side (TypeScript):** Click replaces thumbnail with an autoplay iframe (`youtube.com/embed/{id}?autoplay=1`). This only applies in the DotNetBrowser context (WebRTC, sub-apps).
-- **Chat (C# hook / LinkEmbedEngine):** Click opens the YouTube URL in the default browser. There is no inline player — chat is Avalonia-native.
+- **Chat (native layer):** Click opens the YouTube URL in the default browser. There is no inline player since chat is rendered natively.
 
 ## How it works
 
@@ -105,11 +105,10 @@ The plugin walks up from the anchor to find the nearest block-level parent (`dis
 
 - **CORS failures** -- despite `--disable-web-security`, some servers may still reject cross-origin fetches. No embed is rendered on failure.
 - **50KB HTML limit** -- pages with OpenGraph tags deep in the HTML (after 50KB) won't have their metadata extracted
-- **Chat is Avalonia-native** -- this TypeScript plugin only works in the DotNetBrowser context (WebRTC, sub-apps). Chat link embeds are handled by the C# hook's `LinkEmbedEngine` (Avalonia-native, Phase 4.5b). Supports YouTube, Twitter/X, direct images, embed-fixer domains (vxtwitter, fxtwitter, fixupx), and any site with OpenGraph or oEmbed tags.
+- **Chat is rendered natively** -- this TypeScript plugin only works in the browser context (WebRTC, sub-apps). Chat link embeds are handled by the native hook layer. Supports YouTube, Twitter/X, direct images, embed-fixer domains (vxtwitter, fxtwitter, fixupx), and any site with OpenGraph or oEmbed tags.
 - **No embed for title-less pages** -- if a page has no `og:title`, `twitter:title`, and no `<title>`, no embed is created
-- **No animated image preview** -- `.gif` and animated `.webp` render as static thumbnails (browser-side only; C# hook-side supports animated playback)
-- **Video embeds show placeholder** -- direct `.mp4`/`.webm`/`.mov` URLs show a dark 16:9 placeholder with play button (no first-frame extraction — SkiaSharp cannot decode video codecs); clicking opens in default browser
-- **Trimming constraints** -- `Regex.Replace` with lambdas and `ReadAsStringAsync` are trimmed in Root's binary; all JSON decoding and HTTP body reading uses manual loops and `ReadAsStreamAsync` instead
+- **No animated image preview** -- `.gif` and animated `.webp` render as static thumbnails (browser-side only; native layer supports animated playback)
+- **Video embeds show placeholder** -- direct `.mp4`/`.webm`/`.mov` URLs show a dark 16:9 placeholder with play button (no first-frame extraction); clicking opens in default browser
 - **Verbose logging** -- detailed HTTP step logs available via `UPROOTED_VERBOSE=1` environment variable
 
 ---

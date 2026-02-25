@@ -38,7 +38,7 @@ function Write-Err($msg) { Write-Host "[-] $msg" -ForegroundColor Red }
 
 Write-Host ""
 Write-Host "  +---------------------------------+" -ForegroundColor Green
-Write-Host "  |    Uprooted Installer v0.5.1-dev2    |" -ForegroundColor Green
+Write-Host "  |    Uprooted Installer v0.5.1    |" -ForegroundColor Green
 Write-Host "  +---------------------------------+" -ForegroundColor Green
 Write-Host "  Method: $Method" -ForegroundColor Gray
 Write-Host ""
@@ -168,7 +168,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-$builtDll = Join-Path $HookProjectDir "bin\Release\net9.0\$DllName"
+$builtDll = Join-Path $HookProjectDir "bin\Release\net10.0\$DllName"
 if (-not (Test-Path $builtDll)) {
     Write-Err "Built DLL not found at: $builtDll"
     exit 1
@@ -182,7 +182,7 @@ New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 Copy-Item $builtDll $InstallDir -Force
 
 # Copy deps.json if it exists
-$depsJson = Join-Path $HookProjectDir "bin\Release\net9.0\UprootedHook.deps.json"
+$depsJson = Join-Path $HookProjectDir "bin\Release\net10.0\UprootedHook.deps.json"
 if (Test-Path $depsJson) {
     Copy-Item $depsJson $InstallDir -Force
 }
